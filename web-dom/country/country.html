@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>选择DOM</title>
+		<link rel="stylesheet" href="http://static.dev.egtcp.com/static/lib/zui/1.4.0/css/zui.min.css">
+		<script src="http://static.dev.egtcp.com/static/lib/jquery/core/1.9.1/jquery.min.js"></script>
+		<script src="http://static.dev.egtcp.com/static/lib/zui/1.4.0/js/zui.min.js"></script>
+
+		<link rel="stylesheet" href="http://static.dev.egtcp.com/static/lib/zui/1.4.0/lib/chosen/chosen.min.css">
+		<script src="http://static.dev.egtcp.com/static/lib/zui/1.4.0/lib/chosen/chosen.min.js"></script>
+	</head>
+
+	<body>
+		<h4>数据读取-select加属性load-data,如：load-data="AW";加属性 load-lang，可选值为en(默认值)/cn，如需设置中文，添加属性load-lang="cn"</h4>
+		<select id="countrys" name="countrys" class="col-xs-6" load-data="BF" load-lang="cn"></select>
+		<div style="width: 30px;display: inline-block;">
+			<img id="img" />
+		</div>
+		<input class="show" type="text" name="address" id="address" />(class改加hide即可隐藏)
+		<script type="text/javascript">
+			var country = $("#countrys");
+			var ldata = $("#countrys").attr("load-data");
+			var lang = $("#countrys").attr("load-lang");
+			var addre = $("#address");
+			var img = $("#img");
+			var temp_option = "";
+			var getcountry;
+                       
+			var init = function() {
+				option = temp_option;				 
+				var getjson=$.each(getcountry, function(i, data) {
+					if(lang == "cn") {
+						option += "<option name=\"" + data.Flag + "\" value=\"" + data._id + "\">" + data.Name_zh + "</option>"; //中文
+					} else {
+						option += "<option name=\"" + data.Flag + "\" value=\"" + data._id + "\">" + data.Name_en + "</option>"; //英文
+					}
+				});
+				$.when(getjson).done(function(data) {
+						country.html(option);
+						country.chosen({
+						lang: "en", //'zh_cn'（默认）,'zh_tw','en'
+						disable_search_threshold: 10, // 10 个以下的选择项则不显示检索框
+						search_contains: true // 从任意位置开始检索
+					});
+					country.change(function() {
+						// 用户改变了选择，快快处理    
+						addre.val(country.val());
+						country.attr("load-data",country.val());
+						var src=country.find("option:selected").attr("name");
+						img.attr("src",'data:image/jpeg;base64,' +src);
+					});
+					if(ldata != "") {
+						addre.val(ldata);
+						country.val(ldata); //获取国家目录并赋值
+						country.trigger('chosen:updated');
+						var src=country.find("option:selected").attr("name");
+						img.attr("src",'data:image/jpeg;base64,' +src );
+					}
+				});
+			
+			};
+						
+			//加载json数据
+			$.getJSON('http://static.dev.egtcp.com/static/datas/country.json', function(data) {
+				getcountry = data.countrys;
+				init();					
+			});
+		</script>
+	</body>
+
+</html>
