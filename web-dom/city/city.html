@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>城市三级联动</title>
+		<link rel="stylesheet" href="http://static.dev.egtcp.com/static/lib/zui/1.4.0/css/zui.min.css">
+		<script src="http://static.dev.egtcp.com/static/lib/jquery/core/1.9.1/jquery.min.js"></script>
+		<script src="http://static.dev.egtcp.com/static/lib/zui/1.4.0/js/zui.min.js"></script>
+	</head>
+
+	<body>
+		<h4>城市三级联动-默认全部显示</h4>
+
+		<h4>数据读取-selsect加属性-load-data并赋值最后一级城市编号，如load-data="330701"</h4>
+		<form class="form-horizontal col-xs-6">
+			<div class="form-group">
+				<label for="" class="col-sm-3 text-right">地址</label>
+				<div class="col-sm-3">
+					<select id="province" class="form-control" load-data="330701">
+						<option value="">--选择省/市--</option>
+					</select>
+				</div>
+				<div class="col-sm-3">
+					<select id="city" class="form-control">
+						<option value="">--选择城市--</option>
+					</select>
+				</div>
+				<div class="col-sm-3">
+					<select id="dist" class="form-control">
+						<option value="">--选择区域--</option>
+					</select>
+				</div>
+				<input class="show" type="text" name="address" id="address" />(class改加hide即可隐藏)
+			</div>
+		</form>
+
+		<script type="text/javascript">
+			var prov_obj = $("#province");
+			var city_obj = $("#city");
+			var district_obj = $("#dist");
+			var are_obj = $("#address");
+			var city = document.getElementById('city');
+			var district = document.getElementById('dist');
+			var select_prehtml="";
+			var getcity;
+
+			var setCity = function() {
+				//只要触发了此事件，2、3级菜单必须还原				
+				city.options.length = 1; //重置选项
+				district.options.length = 1; //重置选项
+				var val = prov_obj.val();
+				
+				temp_html=select_prehtml;
+				var getjson = $.each(getcity, function(i, prov) {
+					if(prov.level == 2 && prov.parent_code == val) {
+						temp_html += "<option name=\"" + prov.abbr + "\" value=\"" + prov.code + "\">" + prov.name + "</option>";
+					}
+
+				});
+				$.when(getjson).done(function(data) {
+					city_obj.append(temp_html);
+					getdist("one");
+				});
+
+			}; //设置城市
+
+			var setArea = function() {
+				//只要触发了此事件，3级菜单必须还原				
+				district.options.length = 1; //重置选项
+				var val = city_obj.val();
+				
+				temp_html=select_prehtml;
+				var getjson = $.each(getcity, function(i, prov) {
+					if(prov.level == 3 && prov.parent_code == val) {
+						temp_html += "<option name=\"" + prov.abbr + "\" value=\"" + prov.code + "\">" + prov.name + "</option>";
+					}
+
+				});
+				$.when(getjson).done(function(data) {
+					district_obj.append(temp_html);
+					if(district.options.length < 2) {
+						district_obj.hide();
+					} else {
+						district_obj.show();
+					}
+					getdist("two");
+				});
+			}; //设置区域
+
+			var getdist = function(sign) {
+				var s1 = prov_obj.val();
+				var s2 = city_obj.val();
+				var s3 = district_obj.val();
+				if(sign == "one") {
+					are_obj.val(s1);
+					prov_obj.attr("load-data", s1);
+				} else if(sign == "two") {
+					are_obj.val(s2);
+					prov_obj.attr("load-data", s2);
+				} else {
+					are_obj.val(s3);
+					prov_obj.attr("load-data", s3);
+				}
+			}; //获取城市编码
+
+			var load_city = function() {
+				if($("select").attr("load-data") != "") {
+					var ldata = $("select").attr("load-data");
+					are_obj.val(ldata);
+					temp_html,temp_html2=select_prehtml;
+					for(var i = 0; i < getcity.length; i++) {
+						if(getcity[i].code == ldata && getcity[i].parent_code.substr(2, 4) == "0000") {
+							var s1 = ldata.substr(0, 2) + "0000"; //1级
+							prov_obj.val(s1);//获取1级城市目录并赋值
+							for(var j = 0; j < getcity.length; j++) {
+								if(getcity[j].level == 2 && getcity[j].parent_code == getcity[i].parent_code) {
+									temp_html += "<option name=\"" + getcity[j].abbr + "\" value=\"" + getcity[j].code + "\">" + getcity[j].name + "</option>"; //获取2级城市目录
+								}
+							}
+							city_obj.append(temp_html);
+							city_obj.val(ldata);//获取2级城市目录并赋值
+						} else if(getcity[i].code == ldata && getcity[i].parent_code.substr(2, 4) !== "0000") {
+							var s1 = ldata.substr(0, 2) + "0000"; //1级
+							var s2 = ldata.substr(0, 4) + "00"; //2级
+							$("#province option[value='" + s1 + "']").attr('selected', true);
+							for(var j = 0; j < getcity.length; j++) {
+								if(getcity[j].level == 3 && getcity[j].parent_code == s2) {
+									temp_html += "<option name=\"" + getcity[j].abbr + "\" value=\"" + getcity[j].code + "\">" + getcity[j].name + "</option>"; //获取3级城市目录
+								} else if(getcity[j].level == 2 && getcity[j].parent_code == s1) {
+									temp_html2 += "<option name=\"" + getcity[j].abbr + "\" value=\"" + getcity[j].code + "\">" + getcity[j].name + "</option>"; //获取2级城市目录
+								}
+
+							}
+							city_obj.append(temp_html2);
+							city_obj.val(s2);//获取2级城市目录并赋值
+							district_obj.append(temp_html);
+							district_obj.val(ldata);//获取3级城市目录并赋值
+						}
+					}
+				}
+			}
+
+			var init = function() {
+				// 遍历赋值省份下拉列表
+				temp_html=select_prehtml;
+				$.each(getcity, function(i, prov) {
+					if(prov.level == 1) {
+						temp_html += "<option name=\"" + prov.abbr + "\" value=\"" + prov.code + "\">" + prov.name + "</option>";
+					}
+
+				});
+				prov_obj.append(temp_html);
+
+				prov_obj.bind("change", function() {
+					setCity();
+				});
+
+				city_obj.bind("change", function() {
+					setArea();
+
+				});
+				district_obj.bind("change", function() {
+					getdist();
+				});
+			};
+			//加载json数据
+			$.getJSON('city.json', function(data) {
+				getcity = data.area;
+				init();
+				load_city();
+			});
+		</script>
+	</body>
+
+</html>
