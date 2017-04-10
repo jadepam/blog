@@ -123,7 +123,7 @@
 						} else if(getcity[i].code == ldata && getcity[i].parent_code.substr(2, 4) !== "0000") {
 							var s1 = ldata.substr(0, 2) + "0000"; //1级
 							var s2 = ldata.substr(0, 4) + "00"; //2级
-							$("#province option[value='" + s1 + "']").attr('selected', true);
+							prov_obj.val(s1);
 							for(var j = 0; j < getcity.length; j++) {
 								if(getcity[j].level == 3 && getcity[j].parent_code == s2) {
 									temp_html += "<option name=\"" + getcity[j].abbr + "\" value=\"" + getcity[j].code + "\">" + getcity[j].name + "</option>"; //获取3级城市目录
